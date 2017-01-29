@@ -19,11 +19,13 @@
 import falcon
 from . import resources
 
+config = {"relay_uid": "@matrix_relay:nixos"}
+
 api = application = falcon.API()
 
-room = resources.Room()
-transaction = resources.Transaction()
-user = resources.User()
+room = resources.Room(None, config)
+transaction = resources.Transaction(None, config)
+user = resources.User(None, config)
 api.add_route("/rooms/{room_alias}", room)
 api.add_route("/transactions/{txn_id}", transaction)
 api.add_route("/users/{user_id}", user)
