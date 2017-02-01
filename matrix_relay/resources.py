@@ -46,8 +46,8 @@ class User(Resource):
     def on_get(self, request, response, user_id=None):
         if user_id == self.config['relay_uid']:
             response.status = falcon.HTTP_200
-            response.body = json.dumps(dict())
+            response.body = json.dumps({})
             #api.register(user_id=self.relay_user_id)
         else:
             response.status = falcon.HTTP_404
-            response.body = json.dumps(dict())
+            response.body = json.dumps({})
