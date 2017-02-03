@@ -30,10 +30,13 @@ class MatrixHttpApi:
         self.token = token
         self.client_api_path = "/_matrix/client/r0"
 
+        self.session = requests.Session()
+        self.session.mount(self.base_url, requests.adapters.HTTPAdapter())
+
     def _request(self, request_type, api_path, content=None, header=None, params=None):
         '''Sends HTTP request.'''
         if request_type not in ("GET", "PUT", "POST"):
-            raise errors.HttpError("Invalid http method: {0}".format(request_type))
+            raise requests.exceptions.HTTPError("Invalid http method: {0}".format(request_type))
         full_path = self.base_url + api_path
 
         if header is None:
@@ -48,7 +51,7 @@ class MatrixHttpApi:
         if "access_token" not in params:
             params["access_token"] = self.token
 
-        http_response = requests.request(
+        http_response = self.session.request(
             request_type, full_path, headers=header,
             params=params, data=content, verify=False
         )
@@ -62,3 +65,12 @@ class MatrixHttpApi:
         }
         content.update(kwargs)
         return self._request("POST", self.client_api_path + "/login", content=content)
+
+    def as_register(self, username, as_token):
+        '''Calls the register endpoint as an application server.'''
+        content = {
+            "type": "m.login.application_service",
+            "username": username,
+        }
+        return self._request("POST", self.client_api_path + "/register", content=content,
+                             params={"access_token": as_token})

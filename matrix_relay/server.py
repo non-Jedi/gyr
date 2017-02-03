@@ -20,6 +20,7 @@ import os
 import json
 import falcon
 from . import resources
+from .api import MatrixHttpApi
 
 # Load configuration
 dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -27,11 +28,12 @@ config_path = os.path.join(dir_path, 'config.json')
 with open(config_path, 'r') as config_file:
     config = json.load(config_file)
 
-api = application = falcon.API()
+api = MatrixHttpApi(config["server_addr"])
+application = falcon.API()
 
-room = resources.Room(None, config)
-transaction = resources.Transaction(None, config)
-user = resources.User(None, config)
-api.add_route("/rooms/{room_alias}", room)
-api.add_route("/transactions/{txn_id}", transaction)
-api.add_route("/users/{user_id}", user)
+room = resources.Room(None, config, api)
+transaction = resources.Transaction(None, config, api)
+user = resources.User(None, config, api)
+application.add_route("/rooms/{room_alias}", room)
+application.add_route("/transactions/{txn_id}", transaction)
+application.add_route("/users/{user_id}", user)

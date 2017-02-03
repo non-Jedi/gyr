@@ -15,18 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Matrix Relay.  If not, see
 # <http://www.gnu.org/licenses/>.
+
 import json
 import falcon
-from .api import MatrixHttpApi
-
-api = MatrixHttpApi("localhost:8000")
 
 
 class Resource:
 
-    def __init__(self, storage_path, config):
+    def __init__(self, storage_path, config, api):
         self.storage_path = storage_path
         self.config = config
+        self.api = api
 
 
 class Room(Resource):
@@ -47,7 +46,7 @@ class User(Resource):
         if user_id == self.config['relay_uid']:
             response.status = falcon.HTTP_200
             response.body = json.dumps({})
-            #api.register(user_id=self.relay_user_id)
+            self.api.as_register(user_id, self.config['as_token'])
         else:
             response.status = falcon.HTTP_404
             response.body = json.dumps({})

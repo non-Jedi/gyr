@@ -1,3 +1,5 @@
 {
-	"relay_uid": "@matrix_relay:localhost"
+	"relay_uid": "matrix_relay",
+	"server_addr": "https://localhost:8448",
+	"as_token": "sampletoken"
 }
