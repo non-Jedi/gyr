@@ -18,6 +18,7 @@
 
 import json
 import falcon
+from . import utils
 
 
 class Resource:
@@ -37,7 +38,24 @@ class Room(Resource):
 class Transaction(Resource):
 
     def on_put(self, request, response, txn_id=None):
-        pass
+        response.status = falcon.HTTP_200
+        response.body = json.dumps({})
+        # request.stream.read().decode("utf-8") raises an error. Go figure.
+        # request.context is a dictionary that comes with the request for some reason
+        request.context["body"] = request.stream.read()
+        if not request.context["body"]:
+            raise falcon.HTTPBadRequest('Empty request body')
+        try:
+            # body should contain json object where key "events"
+            # returns a list of events
+            request.context["events"] = json.loads(request.context["body"].decode("utf-8"))["events"]
+        except (ValueError, UnicodeDecodeError):
+            raise falcon.HTTPError(falcon.HTTP_753,
+                                   "Malformed JSON",
+                                   "JSON was incorrect or not encoded as UTF-8.")
+        for event in request.context["events"]:
+            # proc_event may end up as a method of Transaction
+            utils.proc_event(event)
 
 
 class User(Resource):

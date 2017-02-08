@@ -16,24 +16,14 @@
 # along with Matrix Relay.  If not, see
 # <http://www.gnu.org/licenses/>.
 
-import os
-import json
-import falcon
-from . import resources
-from .api import MatrixHttpApi
+import string
 
-# Load configuration
-dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-config_path = os.path.join(dir_path, 'config.json')
-with open(config_path, 'r') as config_file:
-    config = json.load(config_file)
 
-api = MatrixHttpApi(config["homeserver_addr"])
-application = falcon.API()
+def mxid2relayuser(mxid):
+    munge_rules = dict(zip(string.ascii_uppercase, [''.join(("_", i)) for i in string.ascii_lowercase]))
+    munge_rules.update({"@": "=40", ":": "=3a"})
+    return "".join(("relay__", mxid.translate(str.maketrans(munge_rules))))
 
-room = resources.Room(None, config, api)
-transaction = resources.Transaction(None, config, api)
-user = resources.User(None, config, api)
-application.add_route("/rooms/{room_alias}", room)
-application.add_route("/transactions/{txn_id}", transaction)
-application.add_route("/users/{user_id}", user)
+
+def proc_event(event):
+    print(event)
