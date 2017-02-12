@@ -38,22 +38,59 @@ class Room(Resource):
 class Transaction(Resource):
 
     def on_put(self, request, response, txn_id=None):
+        '''Responds to PUT request containing events'''
+        # Unless there's a problem with the request, return 200
         response.status = falcon.HTTP_200
-        response.body = json.dumps({})
-        # request.stream.read().decode("utf-8") raises an error. Go figure.
-        # request.context is a dictionary that comes with the request for some reason
+        response.body = "{}"
+        # For duplicate txns, method should not complete
+        if not utils.new_txn(txn_id):
+            return
+        # request.context is a dictionary for some reason
         request.context["body"] = request.stream.read()
         try:
-            # body should contain json object where key "events"
-            # returns a list of events
+            # Request body contains json object with key "events"
             request.context["events"] = json.loads(request.context["body"].decode("utf-8"))["events"]
         except(KeyError, ValueError, UnicodeDecodeError):
             response.status = falcon.HTTP_400
             response.body = "Malformed request body"
-            request.context["events"] = []
+            request.context["events"] = list()
         for event in request.context["events"]:
-            # proc_event may end up as a method of Transaction
-            utils.proc_event(event)
+            # Method rather than function for access to AS token
+            self.proc_event(event)
+
+    def proc_event(self, event):
+        # Retrieve the latest canonical rooms to be relayed
+        relayed = utils.get_rooms()
+        if event["room_id"] in relayed:
+            # for code brevity:
+            room = event["room_id"]
+            if event["type"] == "m.room.message":
+                if event["user_id"] in relayed[room]["users"]:
+                    utils.relay_message(event["content"],
+                                        event["user_id"],
+                                        relayed[room]["to"])
+        else:
+            # Check for commands to relay bridge here?
+            pass
+        # Following is the list of event types that must be handled
+        # m.room.aliases IGNORE
+        # m.room.canonical_alias IGNORE
+        # m.room.create IGNORE
+        # m.room.join_rules IGNORE
+        # m.room.member P1
+        # m.room.power_levels IGNORE
+        # m.room.redaction P2
+        # INSTANT MESSAGING
+        # m.room.message P1
+        # m.room.name P3
+        # m.room.topic P3
+        # m.room.avatar P3
+        # TYPING NOTIFICATION
+        # m.typing P2
+        # RECEIPTS
+        # m.receipt P3
+        # PRESENCE
+        # m.presence P2
 
 
 class User(Resource):
