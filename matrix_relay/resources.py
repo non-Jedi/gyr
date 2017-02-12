@@ -22,6 +22,7 @@ from . import utils
 
 
 class Resource:
+    """Master class for falcon http resources."""
 
     def __init__(self, storage_path, config, api):
         self.storage_path = storage_path
@@ -30,15 +31,18 @@ class Resource:
 
 
 class Room(Resource):
+    """Generates objects to respond to GET /rooms/{room_alias}."""
 
     def on_get(self, request, response, name=None):
+        """Called when a GET request is sent to /rooms/{room_alias}"""
         pass
 
 
 class Transaction(Resource):
+    """Generates objects to respond to PUT /transactions/{txn_id}"""
 
     def on_put(self, request, response, txn_id=None):
-        '''Responds to PUT request containing events'''
+        """Responds to PUT request containing events."""
         # Unless there's a problem with the request, return 200
         response.status = falcon.HTTP_200
         response.body = "{}"
@@ -59,6 +63,7 @@ class Transaction(Resource):
             self.proc_event(event)
 
     def proc_event(self, event):
+        """Manipulates and sends requests based on event type."""
         # Retrieve the latest canonical rooms to be relayed
         relayed = utils.get_rooms()
         if event["room_id"] in relayed:
@@ -94,8 +99,10 @@ class Transaction(Resource):
 
 
 class User(Resource):
+    """Generates objects to respond to GET /users/{user_id}"""
 
     def on_get(self, request, response, user_id=None):
+        """Responds to GET request for users."""
         if user_id == self.config['relay_uid']:
             response.status = falcon.HTTP_200
             response.body = json.dumps({})

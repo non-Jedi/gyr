@@ -21,10 +21,10 @@ import json
 
 
 class MatrixHttpApi:
-    '''Contains raw Matrix http api calls.'''
+    """Contains raw Matrix http api calls."""
 
     def __init__(self, base_url, token=None):
-        '''Setup the http api.'''
+        """Setup the http api."""
 
         self.base_url = base_url
         self.token = token
@@ -34,7 +34,7 @@ class MatrixHttpApi:
         self.session.mount(self.base_url, requests.adapters.HTTPAdapter())
 
     def _request(self, request_type, api_path, content=None, header=None, params=None):
-        '''Sends HTTP request.'''
+        """Sends HTTP request."""
         if request_type not in ("GET", "PUT", "POST"):
             raise requests.exceptions.HTTPError("Invalid http method: {0}".format(request_type))
         full_path = self.base_url + api_path
@@ -58,7 +58,7 @@ class MatrixHttpApi:
         return http_response
 
     def login(self, login_type, password, **kwargs):
-        '''Calls login api endpoint with password.'''
+        """Calls login api endpoint with password."""
         content = {
             "type": login_type,
             "password": password
@@ -67,7 +67,7 @@ class MatrixHttpApi:
         return self._request("POST", self.client_api_path + "/login", content=content)
 
     def as_register(self, username, as_token):
-        '''Calls the register endpoint as an application server.'''
+        """Calls the register endpoint as an application server."""
         content = {
             "type": "m.login.application_service",
             "username": username,
