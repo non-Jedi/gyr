@@ -77,6 +77,7 @@ class MatrixHttpApi:
 
     def send_event(self, room_id, event_type, txn_id=None,
                    content=None):
+        """Sends a state event to the homeserver."""
         if not content:
             content = dict()
         if txn_id:
