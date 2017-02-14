@@ -28,7 +28,8 @@ config_path = os.path.join(dir_path, 'config.json')
 with open(config_path, 'r') as config_file:
     config = json.load(config_file)
 
-api = MatrixHttpApi(config["homeserver_addr"])
+api = MatrixHttpApi(config["homeserver_addr"],
+                    token=config["as_token"])
 application = falcon.API()
 
 room = resources.Room(None, config, api)

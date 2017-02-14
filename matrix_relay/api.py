@@ -74,3 +74,20 @@ class MatrixHttpApi:
         }
         return self._request("POST", self.client_api_path + "/register", content=content,
                              params={"access_token": as_token})
+
+    def send_event(self, room_id, event_type, txn_id=None,
+                   content=None):
+        if not content:
+            content = dict()
+        if txn_id:
+            api_path = "".join((self.client_api_path, "/",
+                                "/".join((room_id,
+                                          "send",
+                                          event_type,
+                                          txn_id))))
+        else:
+            api_path = "".join((self.client_api_path, "/",
+                                "/".join((room_id,
+                                          "state",
+                                          event_type))))
+        return self._request("PUT", api_path, content)
