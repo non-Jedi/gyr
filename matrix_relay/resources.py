@@ -73,7 +73,8 @@ class Transaction(Resource):
                 if event["user_id"] in relayed[room]["users"]:
                     utils.relay_message(event["content"],
                                         event["user_id"],
-                                        relayed[room]["to"])
+                                        relayed[room]["to"],
+                                        self.api)
         else:
             # Check for commands to relay bridge here?
             pass

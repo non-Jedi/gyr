@@ -19,11 +19,23 @@
 import string
 
 
+def create_relayer(user_id):
+    """Registers user_id if necessary and returns mxid localpart."""
+    if user_id[0] == "@":
+        return user_id[1:].split(sep=":")[0]
+    else:
+        return user_id.split(sep=":")[0]
+
+
 def get_rooms():
     """Returns a dict mapping rooms and users to other rooms."""
     return {"!TmaZBKYIFrIPVGoUYp:localhost":
             {"users": ["@bob:localhost"],
              "to": ["!UmaZBKYIFrIPVGoUYp:localhost"]}}
+
+
+def get_txn_id():
+    return 1
 
 
 def mxid2relayuser(mxid):
@@ -38,6 +50,12 @@ def new_txn(txn_id):
     return True
 
 
-def relay_message(content, sender, rooms):
-    """Sends m.room.message to homeserver using api.py."""
+def relay_message(content, sender, rooms, api):
+    """Sends m.room.message to homeserver.."""
+    relayer = create_relayer(sender)
     print("Relaying message \"{0}\" from sender \"{1}\" to rooms \"{2}\"".format(content, sender, rooms))
+    for room in rooms:
+        # This is all well and good, but how do I choose the sender?
+        # Usually the HS would identify sender by token.
+        api.send_event(room, "m.room.message",
+                       get_txn_id(), content=content)
