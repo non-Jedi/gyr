@@ -57,5 +57,6 @@ def relay_message(content, sender, rooms, api):
     for room in rooms:
         # This is all well and good, but how do I choose the sender?
         # Usually the HS would identify sender by token.
-        api.send_event(room, "m.room.message",
-                       get_txn_id(), content=content)
+        api.send_event(room, "m.room.message", get_txn_id(),
+                       content=content,
+                       params={"user_id": relayer})

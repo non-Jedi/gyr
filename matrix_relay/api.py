@@ -18,6 +18,7 @@
 
 import requests
 import json
+from . import errors
 
 
 class MatrixHttpApi:
@@ -76,19 +77,24 @@ class MatrixHttpApi:
                              params={"access_token": as_token})
 
     def send_event(self, room_id, event_type, txn_id=None,
-                   content=None):
+                   content=None, params=None):
         """Sends a state event to the homeserver."""
         if not content:
             content = dict()
+
         if txn_id:
             api_path = "".join((self.client_api_path, "/",
-                                "/".join((room_id,
-                                          "send",
-                                          event_type,
-                                          txn_id))))
+                                "/".join((room_id, "send", event_type, txn_id))))
         else:
             api_path = "".join((self.client_api_path, "/",
-                                "/".join((room_id,
-                                          "state",
-                                          event_type))))
-        return self._request("PUT", api_path, content)
+                                "/".join((room_id, "state", event_type))))
+
+        for i in range(0, 10):
+            response = self._request("PUT", api_path, content,
+                                     params=params)
+            if response.status_code == 200:
+                break
+        if not response.status_code == 200:
+            raise errors.HomeServerResponseError(
+                "Homeserver did not return 200 after 10 tries.")
+        return response
