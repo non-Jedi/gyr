@@ -18,6 +18,7 @@
 
 import requests
 import json
+from time import sleep
 from . import errors
 
 
@@ -52,10 +53,16 @@ class MatrixHttpApi:
         if "access_token" not in params:
             params["access_token"] = self.token
 
-        http_response = self.session.request(
-            request_type, full_path, headers=header,
-            params=params, data=content, verify=False
-        )
+        while True:
+            http_response = self.session.request(
+                request_type, full_path, headers=header,
+                params=params, data=content, verify=False)
+
+            if http_response.status_code == 429:
+                sleep(http_response.json()["retry_after_ms"] / 1000)
+            else:
+                break
+
         return http_response
 
     def login(self, login_type, password, **kwargs):
@@ -89,12 +96,9 @@ class MatrixHttpApi:
             api_path = "".join((self.client_api_path, "/",
                                 "/".join((room_id, "state", event_type))))
 
-        for i in range(0, 10):
-            response = self._request("PUT", api_path, content,
-                                     params=params)
-            if response.status_code == 200:
-                break
+        response = self._request("PUT", api_path, content,
+                                 params=params)
         if not response.status_code == 200:
             raise errors.HomeServerResponseError(
-                "Homeserver did not return 200 after 10 tries.")
+                "Homeserver did not return 200.")
         return response
