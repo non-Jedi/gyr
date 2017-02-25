@@ -65,12 +65,12 @@ class MatrixHttpApi:
 
         return http_response
 
-    def as_register(self, username, as_token):
+    def as_register(self, username, as_token=None):
         """Calls the register endpoint as an application server."""
-        content = {
-            "type": "m.login.application_service",
-            "username": username,
-        }
+        if not as_token:
+            as_token = self.token
+        content = {"type": "m.login.application_service",
+                   "username": username}
         return self._request("POST", self.client_api_path + "/register", content=content,
                              params={"access_token": as_token})
 
