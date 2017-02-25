@@ -63,7 +63,7 @@ class Transaction(Resource):
             self.proc_event(event)
 
     def proc_event(self, event):
-        """Manipulates and sends requests based on event type."""
+        """Relays events based on event type and room."""
         # Retrieve the latest canonical rooms to be relayed
         relayed = utils.get_rooms()
         if event["room_id"] in relayed:

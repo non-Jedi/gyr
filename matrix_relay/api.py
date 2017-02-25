@@ -65,15 +65,6 @@ class MatrixHttpApi:
 
         return http_response
 
-    def login(self, login_type, password, **kwargs):
-        """Calls login api endpoint with password."""
-        content = {
-            "type": login_type,
-            "password": password
-        }
-        content.update(kwargs)
-        return self._request("POST", self.client_api_path + "/login", content=content)
-
     def as_register(self, username, as_token):
         """Calls the register endpoint as an application server."""
         content = {
