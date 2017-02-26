@@ -18,7 +18,7 @@
 
 import requests
 import json
-from time import sleep
+import time
 from . import errors
 from urllib.parse import quote
 
@@ -60,7 +60,7 @@ class MatrixHttpApi:
                 params=params, data=content, verify=False)
 
             if http_response.status_code == 429:
-                sleep(http_response.json()["retry_after_ms"] / 1000)
+                time.sleep(http_response.json()["retry_after_ms"] / 1000)
             else:
                 break
 

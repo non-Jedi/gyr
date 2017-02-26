@@ -16,6 +16,7 @@
 # along with Matrix Relay.  If not, see
 # <http://www.gnu.org/licenses/>.
 
+import time
 from .context import matrix_relay
 import matrix_relay.api
 import responses
@@ -78,3 +79,27 @@ def test_send_event():
     req1_qs = parse_qs(urlparse(responses.calls[1].request.url).query)
     assert req1_qs == params
     assert json.loads(responses.calls[1].request.body) == content_1
+
+
+@responses.activate
+def test_429_behavior(monkeypatch):
+    monkeypatch.setattr(time, "sleep", lambda s: None)
+    event_type = "m.room.name"
+    room_id = "!636q39766251@example.com"
+    params = {"user_id": ["@test:example.com"],
+              "access_token": ["test_token"]}
+    content = {"name": "test_name"}
+    endpoint = base_url + quote("rooms/" + room_id + "/state/" + event_type)
+    with responses.RequestsMock(assert_all_requests_are_fired=True) as rsps:
+        rsps.add(responses.PUT, endpoint, body='{"retry_after_ms": 1000}',
+                 status=429, content_type="application_json")
+        rsps.add(responses.PUT, endpoint, body='{}', status=200,
+                 content_type="application_json")
+        resp = api.send_event(room_id, event_type, content=content,
+                              params=params)
+        assert resp.status_code == 200
+        assert len(rsps.calls) == 2
+        assert rsps.calls[0].response.status_code == 429
+        assert rsps.calls[1].response.status_code == 200
+        assert rsps.calls[0].request.body == rsps.calls[1].request.body
+        assert rsps.calls[0].request.url == rsps.calls[1].request.url
