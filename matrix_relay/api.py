@@ -20,6 +20,7 @@ import requests
 import json
 from time import sleep
 from . import errors
+from urllib.parse import quote
 
 
 class MatrixHttpApi:
@@ -39,7 +40,7 @@ class MatrixHttpApi:
         """Sends HTTP request."""
         if request_type not in ("GET", "PUT", "POST"):
             raise requests.exceptions.HTTPError("Invalid http method: {0}".format(request_type))
-        full_path = self.base_url + api_path
+        full_path = self.base_url + quote(api_path)
 
         if header is None:
             header = dict()
@@ -76,16 +77,21 @@ class MatrixHttpApi:
 
     def send_event(self, room_id, event_type, txn_id=None,
                    content=None, params=None):
-        """Sends a state event to the homeserver."""
+        """Sends a state event to the homeserver.
+
+        For an application server, params should include the
+        as_token as access_token and the intended user id as
+        user_id.
+        """
         if not content:
             content = dict()
 
         if txn_id:
             api_path = "".join((self.client_api_path, "/",
-                                "/".join((room_id, "send", event_type, txn_id))))
+                                "/".join(("rooms", room_id, "send", event_type, txn_id))))
         else:
             api_path = "".join((self.client_api_path, "/",
-                                "/".join((room_id, "state", event_type))))
+                                "/".join(("rooms", room_id, "state", event_type))))
 
         response = self._request("PUT", api_path, content,
                                  params=params)
