@@ -30,20 +30,29 @@ def retrieve_data(path):
         return json.load(f)
 
 
-def resolve_path(attribute, base_path=os.path.os.getcwd()):
+def resolve_path(attribute, base_path=os.getcwd()):
     """Returns the filesystem path to the specified attribute."""
     return os.path.join(base_path, attribute[0], attribute)
 
 
 def save_data(path, contents):
     """Serializes data and saves to specified path."""
-    _mk_path(os.path.sep.join(os.path.split(path)[:-1]))
+    _mk_path(os.sep.join(os.path.split(path)[:-1]))
     with open(path, 'w', encoding="utf8") as f:
         json.dump(contents, f)
+
+
+def retrieve_all_data(base_path, attribute_type):
+    """Returns all attributes of a certain type (e.g. "@") as dict)."""
+    wd = os.sep.join((base_path, attribute_type))
+    data = dict()
+    for f in os.listdir(wd):
+        data[f] = retrieve_data(os.sep.join((wd, f)))
+    return data
 
 
 def _mk_path(path):
     """Creates directories recursively."""
     if not os.path.exists(path):
-        _mk_path(os.path.sep.join(os.path.split(path)[:-1]))
+        _mk_path(os.sep.join(os.path.split(path)[:-1]))
         os.mkdir(path)
