@@ -30,9 +30,11 @@ def retrieve_data(path):
         return json.load(f)
 
 
-def resolve_path(attribute, base_path=os.getcwd()):
+def resolve_path(attribute, base_path=os.getcwd(), attr_type=None):
     """Returns the filesystem path to the specified attribute."""
-    return os.path.join(base_path, attribute[0], attribute)
+    if attr_type is None:
+        attr_type = attribute[0]
+    return os.path.join(base_path, attr_type, attribute)
 
 
 def save_data(path, contents):

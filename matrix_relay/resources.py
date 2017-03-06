@@ -74,7 +74,7 @@ class Transaction(Resource):
                     utils.relay_message(event["content"],
                                         event["user_id"],
                                         relayed[room]["to"],
-                                        self.api)
+                                        self.api, self.storage_path)
         else:
             # Check for commands to relay bridge here?
             pass

@@ -8,11 +8,11 @@
 		"users": [
 			{
 				"exclusive": true,
-				"regex": "@relay=*"
+				"regex": "@relay_*"
 			},
 			{
 				"exclusive": true,
-				"regex": "@matrix_relay"
+				"regex": "@matrix_relay*"
 			}
 		],
 		"rooms": [],

@@ -16,23 +16,32 @@
 # along with Matrix Relay.  If not, see
 # <http://www.gnu.org/licenses/>.
 
-import string
+from string import ascii_lowercase, ascii_uppercase
 import uuid
+from . import iofs
 
 
-def create_relayer(user_id):
+def create_relayer(user_id, base_path, api):
     """Registers user_id if necessary and returns mxid localpart."""
-    if user_id[0] == "@":
-        return user_id[1:].split(sep=":")[0]
-    else:
-        return user_id.split(sep=":")[0]
+    localpart = mxid2relayuser(user_id)
+    # Can abstract over this to save filesystem access by caching
+    if user_id not in get_users(base_path):
+        api.as_register(localpart)
+        # No info about user to save in current design
+        iofs.save_data(iofs.resolve_path(user_id, base_path), {})
+    return localpart
 
 
-def get_rooms():
+def get_rooms(base_path):
     """Returns a dict mapping rooms and users to other rooms."""
-    return {"!TmaZBKYIFrIPVGoUYp:localhost":
-            {"users": ["@bob:localhost"],
-             "to": ["!UmaZBKYIFrIPVGoUYp:localhost"]}}
+    rooms = iofs.retrieve_all_data(base_path, "!")
+    rooms.update(iofs.retrieve_all_data(base_path, "#"))
+    return rooms
+
+
+def get_users(base_path):
+    """Returns a dict of all users the AS is aware of."""
+    return iofs.retrieve_all_data(base_path, "@")
 
 
 def new_txn_id():
@@ -42,19 +51,24 @@ def new_txn_id():
 
 def mxid2relayuser(mxid):
     """Returns a localpart str based on a mxid."""
-    munge_rules = dict(zip(string.ascii_uppercase, [''.join(("_", i)) for i in string.ascii_lowercase]))
+    # mxid localparts must not contain capital letters.
+    sub_lower = ["".join(("_", i)) for i in ascii_lowercase]
+    munge_rules = dict(zip(ascii_uppercase, sub_lower))
+    # mxid localparts cannot contain @ or :
     munge_rules.update({"@": "=40", ":": "=3a"})
-    return "".join(("relay__", mxid.translate(str.maketrans(munge_rules))))
+    return "".join(("relay_", mxid.translate(str.maketrans(munge_rules))))
 
 
-def new_txn(txn_id):
+def new_txn(txn_id, base_path):
     """Checks whether txn has occurred yet and logs it if it hasn't."""
-    return True
+    # Use "t" as txn_id prefix
+    if txn_id not in iofs.retrieve_all_data(base_path, "t"):
+        iofs.save_data(iofs.resolve_path(txn_id, base_path, "t"), {})
 
 
-def relay_message(content, sender, rooms, api):
+def relay_message(content, sender, rooms, api, storage_path):
     """Sends m.room.message to homeserver.."""
-    relayer = create_relayer(sender)
+    relayer = create_relayer(sender, storage_path, api)
     print("Relaying message \"{0}\" from sender \"{1}\" to rooms \"{2}\"".format(content, sender, rooms))
     for room in rooms:
         # This is all well and good, but how do I choose the sender?
