@@ -60,10 +60,13 @@ def mxid2relayuser(mxid):
 
 
 def new_txn(txn_id, base_path):
-    """Checks whether txn has occurred yet and logs it if it hasn't."""
+    """Returns True if txn hasn't occurred before."""
     # Use "t" as txn_id prefix
-    if txn_id not in iofs.retrieve_all_data(base_path, "t"):
+    if txn_id in iofs.retrieve_all_data(base_path, "t"):
+        return False
+    else:
         iofs.save_data(iofs.resolve_path(txn_id, base_path, "t"), {})
+        return True
 
 
 def relay_message(content, sender, rooms, api, storage_path):

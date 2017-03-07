@@ -47,7 +47,7 @@ class Transaction(Resource):
         response.status = falcon.HTTP_200
         response.body = "{}"
         # For duplicate txns, method should not complete
-        if not utils.new_txn(txn_id):
+        if not utils.new_txn(txn_id, self.storage_path):
             return
         # request.context is a dictionary for some reason
         request.context["body"] = request.stream.read()
