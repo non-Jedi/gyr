@@ -16,10 +16,11 @@
 # along with Matrix Relay.  If not, see
 # <http://www.gnu.org/licenses/>.
 
-from .context import matrix_relay
+from .context import matrix_relay, CallCounter
 from matrix_relay import utils
 from matrix_relay import api as api_module
 from matrix_relay import iofs
+import uuid
 
 api = api_module.MatrixHttpApi("https://localhost:8448")
 
@@ -74,16 +75,46 @@ def test_new_txn_id():
 
 
 def test_new_new_txn(monkeypatch):
-    monkeypatch.setattr(iofs, "retrieve_all_data", lambda p, t: {})
-    monkeypatch.setattr(iofs, "save_data", lambda p, d: None)
-    monkeypatch.setattr(iofs, "resolve_path", lambda d, p, t: None)
+    count_rad = CallCounter(return_value=[])
+    monkeypatch.setattr(iofs, "retrieve_all_data", count_rad.inc)
+    count_sd = CallCounter()
+    monkeypatch.setattr(iofs, "save_data", count_sd.inc)
+    count_rp = CallCounter()
+    monkeypatch.setattr(iofs, "resolve_path", count_rp.inc)
     w = utils.new_txn("random_string", "/path/to/nowhere")
+    assert count_rad.count == 1
+    assert count_sd.count == 1
     assert w
+
 
 def test_old_new_txn(monkeypatch):
     monkeypatch.setattr(iofs, "retrieve_all_data",
                         lambda p, t: {"txn_id_string": {}})
     # shouldn't need to save data if an old txn_id
     monkeypatch.delattr(iofs, "save_data")
-    w = utils.new_txn("txn_id_string", "/path/to/nowhere")
+    # using uuid to assure that this isn't a real path.
+    w = utils.new_txn("txn_id_string", "/path/to/nowhere" + str(uuid.uuid4()) + "/nowhere")
     assert not w
+
+
+def test_relay_message(monkeypatch):
+    mcontent = {"msgtype": "m.text", "body": "hello"}
+    msender = "@test:example.com"
+    mrooms = ["#room1:example.com", "#room2:matrix.org"]
+    mpath = "/path/to/nowhere" + str(uuid.uuid4()) + "/here"
+    localpart = "realy_=40test=3aexample.com"
+
+    count_cr = CallCounter(return_value=localpart)
+    monkeypatch.setattr(utils, "create_relayer", count_cr.inc)
+    count_se = CallCounter()
+    monkeypatch.setattr(api, "send_event", count_se.inc)
+    monkeypatch.setattr(utils, "new_txn_id", lambda: 5)
+
+    utils.relay_message(mcontent, msender, mrooms, api, mpath)
+    assert count_cr.count == 1
+    assert count_se.count == 2
+    assert count_se.args[1] == (mrooms[0], "m.room.message", 5)
+    assert count_se.args[2] == (mrooms[1], "m.room.message", 5)
+    assert count_se.kwargs[1] == count_se.kwargs[2]
+    assert count_se.kwargs[1] == {"content": mcontent,
+                                  "params": {"user_id": localpart}}

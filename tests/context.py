@@ -22,3 +22,18 @@ import sys
 sys.path.insert(0, os.path.abspath('..'))
 
 import matrix_relay
+
+
+class CallCounter:
+
+    def __init__(self, return_value=None):
+        self.count = 0
+        self.return_value = return_value
+        self.args = dict()
+        self.kwargs = dict()
+
+    def inc(self, *args, **kwargs):
+        self.count += 1
+        self.args[self.count] = args
+        self.kwargs[self.count] = kwargs
+        return self.return_value

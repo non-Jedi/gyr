@@ -72,10 +72,7 @@ def new_txn(txn_id, base_path):
 def relay_message(content, sender, rooms, api, storage_path):
     """Sends m.room.message to homeserver.."""
     relayer = create_relayer(sender, storage_path, api)
-    print("Relaying message \"{0}\" from sender \"{1}\" to rooms \"{2}\"".format(content, sender, rooms))
     for room in rooms:
-        # This is all well and good, but how do I choose the sender?
-        # Usually the HS would identify sender by token.
         api.send_event(room, "m.room.message", new_txn_id(),
                        content=content,
                        params={"user_id": relayer})
