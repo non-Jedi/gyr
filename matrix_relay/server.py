@@ -32,9 +32,9 @@ api = MatrixHttpApi(config["homeserver_addr"],
                     token=config["as_token"])
 application = falcon.API()
 
-room = resources.Room(None, config, api)
-transaction = resources.Transaction(None, config, api)
-user = resources.User(None, config, api)
+room = resources.Room(config, api)
+transaction = resources.Transaction(config, api)
+user = resources.User(config, api)
 application.add_route("/rooms/{room_alias}", room)
 application.add_route("/transactions/{txn_id}", transaction)
 application.add_route("/users/{user_id}", user)
