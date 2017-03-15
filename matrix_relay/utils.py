@@ -59,6 +59,13 @@ def mxid2relayuser(mxid):
     return "".join(("relay_", mxid.translate(str.maketrans(munge_rules))))
 
 
+def new_relay_room(data, storage_path):
+    """Creates a room and its mappings in the database."""
+    src_rm = data.keys()[0]
+    save_path = iofs.resolve_path(src_rm, base_path=storage_path)
+    iofs.save_data(save_path, data[src_rm])
+
+
 def new_txn(txn_id, base_path):
     """Returns True if txn hasn't occurred before."""
     # Use "t" as txn_id prefix
@@ -69,6 +76,25 @@ def new_txn(txn_id, base_path):
         return True
 
 
+def proc_command(sender, command, storage_path):
+    """Checks sender permissions and executes command."""
+    # For now we'll assume that all senders have permissions
+    if not validate_command(command):
+        return
+    com_tok = command.split(" ")
+    action = com_tok[1]
+
+    if action == "dump":
+        command_data = {com_tok[2]: com_tok[3:]}
+        if com_tok[2] not in get_rooms(storage_path):
+            new_relay_room(command_data, storage_path)
+        else:
+            room_path = iofs.resolve_path(com_tok[2], storage_path)
+            cur_room_data = iofs.retrieve_data(room_path)
+            new_room_data = list(set(cur_room_data + command_data))
+            iofs.save_data(room_path, new_room_data)
+
+
 def relay_message(content, sender, rooms, api, storage_path):
     """Sends m.room.message to homeserver.."""
     relayer = create_relayer(sender, storage_path, api)
@@ -76,3 +102,8 @@ def relay_message(content, sender, rooms, api, storage_path):
         api.send_event(room, "m.room.message", new_txn_id(),
                        content=content,
                        params={"user_id": relayer})
+
+
+def validate_command(command):
+    # Checks that command follows formatting requirements
+    return True

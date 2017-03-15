@@ -48,7 +48,8 @@ class Transaction(Resource):
         # For duplicate txns, method should not complete
         if not utils.new_txn(txn_id, self.config["storage_path"]):
             return
-        # request.context is a dictionary for some reason
+
+        # request.context can be used to store arbitrary dataabout:sessionrestore
         request.context["body"] = request.stream.read()
         try:
             # Request body contains json object with key "events"
@@ -63,6 +64,15 @@ class Transaction(Resource):
 
     def proc_event(self, event):
         """Relays events based on event type and room."""
+        # Check whether event is command to bridge
+        if (event["type"] == "m.room.message" and
+                event["content"]["body"].split(" ")[0] == "!relay"):
+            utils.proc_command(event["user_id"],
+                               event["content"]["body"],
+                               self.config["storage_path"])
+            # Don't need to do anymore processing if command
+            return
+
         # Retrieve the latest canonical rooms to be relayed
         relayed = utils.get_rooms()
         if event["room_id"] in relayed:
