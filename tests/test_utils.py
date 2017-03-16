@@ -118,3 +118,18 @@ def test_relay_message(monkeypatch):
     assert count_se.kwargs[1] == count_se.kwargs[2]
     assert count_se.kwargs[1] == {"content": mcontent,
                                   "params": {"user_id": localpart}}
+
+
+def test_validate_command():
+    valid_commands = [
+        "!relay dump #room:example.com #ex:example.com",
+    ]
+    invalid_commands = [
+        "dump #room:example.com #ex:example.com",
+        "!relay",
+        "!relay #room:example.com #ex:example.com",
+    ]
+    for c in valid_commands:
+        assert utils.validate_command(c)
+    for c in invalid_commands:
+        assert not utils.validate_command(c)
