@@ -18,7 +18,7 @@
 
 import json
 import falcon
-from . import utils
+from . import utils, errors
 
 
 class Resource:
@@ -67,9 +67,13 @@ class Transaction(Resource):
         # Check whether event is command to bridge
         if (event["type"] == "m.room.message" and
                 event["content"]["body"].split(" ")[0] == "!relay"):
-            utils.proc_command(event["user_id"],
-                               event["content"]["body"],
-                               self.config["storage_path"])
+            try:
+                cmd_rsp = utils.proc_command(event["user_id"],
+                                             event["content"]["body"],
+                                             self.config["storage_path"])
+            except errors.RelayNotImplemented as e:
+                cmd_rsp = str(e)
+            utils.send_bot_msg(cmd_rsp, rooms=event["room_id"])
             # Don't need to do anymore processing if command
             return
 

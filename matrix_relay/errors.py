@@ -23,3 +23,7 @@ class MatrixRelayException(Exception):
 
 class HomeServerResponseError(MatrixRelayException):
     pass
+
+
+class RelayNotImplemented(MatrixRelayException):
+    pass

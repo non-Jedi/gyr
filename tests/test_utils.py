@@ -20,6 +20,7 @@ from .context import matrix_relay, CallCounter
 from matrix_relay import utils
 from matrix_relay import api as api_module
 from matrix_relay import iofs
+from matrix_relay.server import config
 import uuid
 
 api = api_module.MatrixHttpApi("https://localhost:8448")
@@ -120,16 +121,18 @@ def test_relay_message(monkeypatch):
                                   "params": {"user_id": localpart}}
 
 
-def test_validate_command():
-    valid_commands = [
-        "!relay dump #room:example.com #ex:example.com",
-    ]
-    invalid_commands = [
-        "dump #room:example.com #ex:example.com",
-        "!relay",
-        "!relay #room:example.com #ex:example.com",
-    ]
-    for c in valid_commands:
-        assert utils.validate_command(c)
-    for c in invalid_commands:
-        assert not utils.validate_command(c)
+def test_send_bot_msg(monkeypatch):
+    tmsg = "This is my test message!"
+    troom = "#room:example.com"
+    tsender = config["sender_localpart"]
+
+    count_se = CallCounter()
+    monkeypatch.setattr(api, "send_event", count_se.inc)
+    monkeypatch.setattr(utils, "new_txn_id", lambda: 6)
+
+    utils.send_bot_msg(tmsg, troom)
+
+    assert count_se.count == 1
+    assert count_se.args[1] == (troom, "m.room.message", 6)
+    assert count_se.kwargs[1] == {"content": {"msgtype": "m.notice", "body": tmsg},
+                                  "params": {"user_id": tsender}}

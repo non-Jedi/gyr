@@ -18,7 +18,7 @@
 
 from string import ascii_lowercase, ascii_uppercase
 import uuid
-from . import iofs
+from . import iofs, errors
 
 
 def create_relayer(user_id, base_path, api):
@@ -79,8 +79,6 @@ def new_txn(txn_id, base_path):
 def proc_command(sender, command, storage_path):
     """Checks sender permissions and executes command."""
     # For now we'll assume that all senders have permissions
-    if not validate_command(command):
-        return
     com_tok = command.split(" ")
     action = com_tok[1]
 
@@ -93,6 +91,9 @@ def proc_command(sender, command, storage_path):
             cur_room_data = iofs.retrieve_data(room_path)
             new_room_data = list(set(cur_room_data + command_data))
             iofs.save_data(room_path, new_room_data)
+    else:
+        raise errors.RelayNotImplemented(
+            "The command you entered hasn't yet been implemented.")
 
 
 def relay_message(content, sender, rooms, api, storage_path):
@@ -102,8 +103,3 @@ def relay_message(content, sender, rooms, api, storage_path):
         api.send_event(room, "m.room.message", new_txn_id(),
                        content=content,
                        params={"user_id": relayer})
-
-
-def validate_command(command):
-    # Checks that command follows formatting requirements
-    return True
