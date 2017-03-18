@@ -20,8 +20,9 @@ import falcon
 
 class Resource:
     """Master class for falcon http resources."""
-    def __init__(self, handler):
+    def __init__(self, handler, hs_api):
         self.handler = handler
+        self.hs_api = hs_api
 
 
 class Room(Resource):
