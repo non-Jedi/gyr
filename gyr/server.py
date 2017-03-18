@@ -25,10 +25,13 @@ class Application(falcon.API):
         # This runs the __init__ method of falcon.API
         super().__init__(*args, **kwargs)
 
+    def add_handlers(room_handler=None, transaction_handler=None,
+                     user_handler=None):
+        """Adds routes to Application that use specified handlers."""
         # Add all the normal matrix API routes
-        room = resources.Room()
-        transaction = resources.Transaction()
-        user = resources.User()
+        room = resources.Room(room_handler)
+        transaction = resources.Transaction(transaction_handler)
+        user = resources.User(user_handler)
         self.add_route("/rooms/{room_alias}", room)
         self.add_route("/transactions/{txn_id}", transaction)
         self.add_route("/users/{user_id}", user)

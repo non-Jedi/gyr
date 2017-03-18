@@ -20,7 +20,8 @@ import falcon
 
 class Resource:
     """Master class for falcon http resources."""
-    pass
+    def __init__(self, handler):
+        self.handler = handler
 
 
 class Room(Resource):
@@ -30,7 +31,8 @@ class Room(Resource):
         """Called when a GET request is sent to /rooms/{room_alias}"""
         response.status = falcon.HTTP_404
         response.body = "{}"
-        # todo
+        # todo: pass details of request body to self.handler
+        # todo: register new room if self.handler returns True
 
 
 class Transaction(Resource):
@@ -38,9 +40,10 @@ class Transaction(Resource):
 
     def on_put(self, request, response, txn_id=None):
         """Responds to PUT request containing events."""
-        response.status = falcon.HTTP_404
+        response.status = falcon.HTTP_200
         response.body = "{}"
-        # todo
+        # todo: verify txn_id is new
+        # todo: pass details of request body to self.handler
 
 
 class User(Resource):
@@ -50,4 +53,5 @@ class User(Resource):
         """Responds to GET request for users."""
         response.status = falcon.HTTP_404
         response.body = "{}"
-        # todo
+        # todo: pass details of request body to self.handler
+        # todo: register new user if self.handler returns True
