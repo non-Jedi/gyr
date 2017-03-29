@@ -15,87 +15,41 @@
 # You should have received a copy of the GNU General Public License
 # along with Gyr.  If not, see
 # <http://www.gnu.org/licenses/>.
-
-import requests
-import json
-import time
-from . import errors
-from urllib.parse import quote
+from matrix_client.api import MatrixHttpApi
 
 
-class MatrixHttpApi:
-    """Contains raw Matrix http api calls."""
+class MatrixASHttpAPI(MatrixHttpApi):
+    """Wraps methods of MatrixHttpApi to use AS identity assertion.
 
-    def __init__(self, base_url, token=None):
-        """Setup the http api."""
+    Usage:
+        matrixAS = MatrixASHttpAPI("@ex:matrix.org", "https://matrix.org", token="foobar")
+        response = matrixAS.sync()
+        response = matrixAS.send_message("!roomid:matrix.org", "Hello!")
 
-        self.base_url = base_url
-        self.token = token
-        self.client_api_path = "/_matrix/client/r0"
+        matrixAS.user_id = "@ex2:matrix.org"
+        response = matrixAS.sync()
+    """
 
-        self.session = requests.Session()
-        self.session.mount(self.base_url, requests.adapters.HTTPAdapter())
+    def __init__(self, user_id, *args, **kwargs):
+        """Construct and configure the HTTP API.
 
-    def _request(self, request_type, api_path, content=None, header=None, params=None):
-        """Sends HTTP request."""
-        if request_type not in ("GET", "PUT", "POST"):
-            raise requests.exceptions.HTTPError("Invalid http method: {0}".format(request_type))
-        full_path = self.base_url + quote(api_path)
-
-        if header is None:
-            header = dict()
-        if "Content-Type" not in header:
-            header["Content-Type"] = "application/json"
-        if header["Content-Type"] == "application/json":
-            content = json.dumps(content)
-
-        if params is None:
-            params = dict()
-        if "access_token" not in params:
-            params["access_token"] = self.token
-
-        while True:
-            http_response = self.session.request(
-                request_type, full_path, headers=header,
-                params=params, data=content, verify=False)
-
-            if http_response.status_code == 429:
-                time.sleep(http_response.json()["retry_after_ms"] / 1000)
-            else:
-                break
-
-        return http_response
-
-    def as_register(self, username, as_token=None):
-        """Calls the register endpoint as an application server."""
-        if not as_token:
-            as_token = self.token
-        content = {"type": "m.login.application_service",
-                   "username": username}
-        return self._request("POST", self.client_api_path + "/register", content=content,
-                             params={"access_token": as_token})
-
-    def send_event(self, room_id, event_type, txn_id=None,
-                   content=None, params=None):
-        """Sends a state event to the homeserver.
-
-        For an application server, params should include the
-        as_token as access_token and the intended user id as
-        user_id.
+        Args:
+            user_id (str): The desired user ID to act as.
+            *args: Arguments to pass to MatrixHttpApi's __init__ method.
+            **kwargs: Keyword arguments to pass to MatrixHttpApi's __init__ method.
         """
-        if not content:
-            content = dict()
+        # Runs the __init__method of MatrixHttpApi
+        super(MatrixASHttpAPI, self).__init__(*args, **kwargs)
+        self.user_id = user_id
 
-        if txn_id:
-            api_path = "".join((self.client_api_path, "/",
-                                "/".join(("rooms", room_id, "send", event_type, txn_id))))
-        else:
-            api_path = "".join((self.client_api_path, "/",
-                                "/".join(("rooms", room_id, "state", event_type))))
+    def _send(self, *args, **kwargs):
+        if "query_params" not in kwargs:
+            kwargs["query_params"] = dict()
+        kwargs["query_params"]["user_id"] = self.user_id
+        super(MatrixASHttpAPI, self)._send(*args, **kwargs)
 
-        response = self._request("PUT", api_path, content,
-                                 params=params)
-        if not response.status_code == 200:
-            raise errors.HomeServerResponseError(
-                "Homeserver did not return 200.")
-        return response
+    def register(self):
+        """Performs /register using AS admin permissions."""
+        content = {"user": self.user_id.strip("@").split(":")[0],
+                   "type": "m.login.application_service"}
+        return super(MatrixASHttpAPI, self)._send("POST", "/register", content)

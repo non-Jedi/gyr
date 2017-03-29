@@ -43,5 +43,6 @@ setup(
     install_requires=[
         'falcon',
         'requirements',
+        'matrix-client>=0.0.6'
     ],
 )
