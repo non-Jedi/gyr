@@ -16,7 +16,7 @@
 # with Gyr.  If not, see <http://www.gnu.org/licenses/>.
 
 import falcon
-from . import resources, api
+from . import resources
 
 
 class Application(falcon.API):
@@ -24,15 +24,23 @@ class Application(falcon.API):
     def __init__(self, hs_address=None, hs_token=None, *args, **kwargs):
         # This runs the __init__ method of falcon.API
         super().__init__(*args, **kwargs)
-        self.hs_api = api.MatrixHttpApi(hs_address, token=hs_token)
+        self.hs_address = hs_address
+        self.hs_token = hs_token
 
-    def add_handlers(room_handler=None, transaction_handler=None,
+    def add_handlers(self, room_handler=None, transaction_handler=None,
                      user_handler=None):
         """Adds routes to Application that use specified handlers."""
         # Add all the normal matrix API routes
-        room = resources.Room(room_handler, self.hs_api)
-        transaction = resources.Transaction(transaction_handler, self.hs_api)
-        user = resources.User(user_handler, self.hs_api)
-        self.add_route("/rooms/{room_alias}", room)
-        self.add_route("/transactions/{txn_id}", transaction)
-        self.add_route("/users/{user_id}", user)
+        if room_handler:
+            room = resources.Room(room_handler, self.hs_api)
+            self.add_route("/rooms/{room_alias}", room)
+        if transaction_handler:
+            transaction = resources.Transaction(transaction_handler, self.hs_api)
+            self.add_route("/transactions/{txn_id}", transaction)
+        if user_handler:
+            user = resources.User(user_handler, self.hs_api)
+            self.add_route("/users/{user_id}", user)
+
+    def create_api(self, ):
+        """Returns an instance of MatrixASHttpAPI."""
+        pass

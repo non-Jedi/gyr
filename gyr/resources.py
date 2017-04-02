@@ -24,6 +24,7 @@ class Resource:
     def __init__(self, handler, hs_api):
         self.handler = handler
         self.hs_api = hs_api
+        # Place to track occurences of e.g. a certain txn_id
         self.tracker = [None] * 20
 
     def _is_new(self, identifier):

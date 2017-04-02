@@ -42,7 +42,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         'falcon',
-        'requirements',
+        'requests',
         'matrix-client>=0.0.6'
     ],
 )
