@@ -16,14 +16,19 @@
 # along with Gyr.  If not, see <http://www.gnu.org/licenses/>.
 
 import falcon
+import json
+from . import utils
+from .matrix_objects import EventStream
 
 
 class Resource:
     """Master class for falcon http resources."""
 
-    def __init__(self, handler, hs_api):
+    def __init__(self, handler, api_factory):
         self.handler = handler
-        self.hs_api = hs_api
+        self.api_factory = api_factory
+        # Api used directly by Room and User resources
+        self.api = api_factory()
         # Place to track occurences of e.g. a certain txn_id
         self.tracker = [None] * 20
 
@@ -40,11 +45,14 @@ class Resource:
 class Room(Resource):
     """Generates objects to respond to GET /rooms/{room_alias}."""
 
-    def on_get(self, request, response, name=None):
+    def on_get(self, request, response, room_alias=None):
         """Called when a GET request is sent to /rooms/{room_alias}"""
         response.body = "{}"
-        # todo: pass details of request body to self.handler
-        # todo: register new room if self.handler returns True
+        if self.handler(room_alias):
+            response.status = falcon.HTTP_200
+            self.api.create_room(alias=room_alias)
+        else:
+            response.status = falcon.HTTP_404
 
 
 class Transaction(Resource):
@@ -66,7 +74,11 @@ class Transaction(Resource):
             response.status = falcon.HTTP_400
             response.body = "Malformed request body"
             return
-        # todo: pass details of request body to self.handler
+
+        if self.handler(EventStream(events, self.api_factory)):
+            response.status = falcon.HTTP_200
+        else:
+            response.status = falcon.HTTP_400
 
 
 class User(Resource):
@@ -75,5 +87,8 @@ class User(Resource):
     def on_get(self, request, response, user_id=None):
         """Responds to GET request for users."""
         response.body = "{}"
-        # todo: pass details of request body to self.handler
-        # todo: register new user if self.handler returns True
+        if self.handler(user_id):
+            response.status = falcon.HTTP_200
+            self.api.register(utils.mxid2localpart(user_id))
+        else:
+            response.status = falcon.HTTP_404

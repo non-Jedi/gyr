@@ -16,35 +16,94 @@
 # along with Gyr.  If not, see
 # <http://www.gnu.org/licenses/>.
 
-from . import utils
-from . import iofs
+from .api import MatrixASHttpAPI
+
+
+class Event:
+    """Represents a matrix event sent by the HS.
+
+    Usage:
+        event = Event(json, api_factory)
+    """
+
+    def __init__(self, json, api_factory):
+        """Instantiates Event instance.
+
+        Args:
+            json(dict): Event json from homeserver.
+            api_factory(func): Creates api for calling homeserver.
+        """
+        self.json = json
+        self.api_factory = api_factory
+
+    @property
+    def user(self):
+        """Creates a User object when requested."""
+        try:
+            return self._user
+        except AttributeError:
+            self._user = MatrixUser(self.json["user_id"], self.api_factory)
+            return self._user
+
+    @property
+    def room(self):
+        """Creates a Room object when requested."""
+        try:
+            return self._room
+        except AttributeError:
+            self._room = MatrixRoom(self.json["room_id"], self.api_factory)
+            return self._room
+
+
+class EventStream:
+    """Iterable representing a stream of events sent by the HS.
+
+    Usage:
+        events = EventStream(event_list, api)
+        [print(i.user) for i in events]
+        """
+
+    def __init__(self, json, api_factory):
+        """Instantiates EventStream instance.
+
+        Args:
+            json(list): List from deserializing txn from homeserver.
+        """
+        self._json = json
+        self._index = 0
+        self.api_factory = api_factory
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self._index == len(self._json):
+            self._index = 0
+            raise StopIteration
+        else:
+            self._index += 1
+            return Event(self._json[self._index], self.api_factory)
+
+
+class MatrixRoom:
+    """Represents matrix room."""
+    pass
 
 
 class MatrixUser:
     """Represents matrix user account."""
 
-    def __init__(self, mxid, storage_path=None, api=None, data=None):
+    def __init__(self, mxid, api_factory):
         self.mxid = mxid
-        self.localpart, self.domain = mxid.strip("@").split(":")
-        # Storage_path is only applicable if using iofs backend
-        self.storage_path = storage_path
-        self.api = api
-        self.data = data
-
-    def load(self, mxid):
-        """loads data from iofs database."""
-        self.mxid = mxid
-        self.localpart, self.domain = mxid.strip("@").split(":")
-
-        mxid_path = iofs.resolve_path(mxid, self.storage_path)
-        self.data = iofs.retrieve_data(mxid_path)
+        if api:
+            self.api = api
+        else:
+            self.api = MatrixASHttpAPI()
 
     def send_message(self, content, rooms):
         """Sends m.room.message using self.api."""
         for room in rooms:
-            self.api.send_event(room, "m.room.message", utils.new_txn_id(),
-                                content=content,
-                                params={"user_id": self.localpart})
+            pass
 
     def fetch_disp_name(self):
         """Uses self.api to fetch display name and set as self.disp_name."""

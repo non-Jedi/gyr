@@ -17,6 +17,7 @@
 
 import falcon
 from . import resources
+from .api import MatrixASHttpAPI
 
 
 class Application(falcon.API):
@@ -32,15 +33,20 @@ class Application(falcon.API):
         """Adds routes to Application that use specified handlers."""
         # Add all the normal matrix API routes
         if room_handler:
-            room = resources.Room(room_handler, self.hs_api)
+            room = resources.Room(room_handler,
+                                  self.create_api)
             self.add_route("/rooms/{room_alias}", room)
         if transaction_handler:
-            transaction = resources.Transaction(transaction_handler, self.hs_api)
+            transaction = resources.Transaction(transaction_handler,
+                                                self.create_api)
             self.add_route("/transactions/{txn_id}", transaction)
         if user_handler:
-            user = resources.User(user_handler, self.hs_api)
+            user = resources.User(user_handler,
+                                  self.create_api)
             self.add_route("/users/{user_id}", user)
 
-    def create_api(self, ):
+    def create_api(self, identity=None):
         """Returns an instance of MatrixASHttpAPI."""
-        pass
+        return MatrixASHttpAPI(self.hs_address,
+                               identity=identity,
+                               token=self.hs_token)
