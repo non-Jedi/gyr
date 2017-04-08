@@ -25,6 +25,12 @@ provides a WSGI application and several other utilities for working with
 matrix. It's designed to be a fairly thin layer of abstraction over
 application service api.
 
+# Status
+
+Pre-alpha! Breaking changes happen on a weekly to daily basis, and the
+developer(s) mostly don't notice at all since this isn't being used for
+anything yet.
+
 # Projects Using Gyr
 
 None for now! Check back later.
@@ -33,20 +39,33 @@ None for now! Check back later.
 
 ## gyr.server
 
-Server provides the WSGI application class. An instance of
+`server` provides the WSGI application class. An instance of
 gyr.server.Application functions as the WSGI app and will automatically
 parse the request and call any handlers provided to the Application
 instance.
 
 ## gyr.api
 
-Api provides a convenience class for working with the parts of the [matrix
-client-server api](http://matrix.org/docs/spec/client_server/r0.2.0.html)
-which are different for an application service than for a normal client (see
-the [AS
-spec](http://matrix.org/docs/spec/application_service/unstable.html#client-server-api-extensions)).
-For working with other parts of the client-server api, we recommend using
-[matrix-python-sdk](https://github.com/matrix-org/matrix-python-sdk).
+`api` provides a helpful wrapper for
+[matrix-python-sdk](https://github.com/matrix-org/matrix-python-sdk)'s
+api, changing the parts of the api that are different for application
+services until such time as similiar changes are merged upstream. Pull
+requests for these changes have been submitted, and some changes already
+merged into master.
+
+For working with the api, I recommend using the wrappers built around
+specific objects which are available in gyr.matrix_objects.
+
+## gyr.matrix_objects
+
+`matrix_objects` provides helpful wrapper classes around matrix users,
+events and rooms. It is not designed to be easily used for the normal
+client-server api but should provide most necessary functionality for
+the manipulation of users and rooms that an application service might
+need to do.
+
+Pull requests enriching the functionality of these classes are very
+welcome.
 
 # Gyr Internals
 
