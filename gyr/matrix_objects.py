@@ -42,7 +42,10 @@ class Event:
         try:
             return self._user
         except AttributeError:
-            mxid = self.json["user_id"]
+            if "sender" in self.json:
+                mxid = self.json["sender"]
+            else:
+                mxid = self.json["user_id"]
             self._user = MatrixUser(mxid, self.api_factory(mxid))
             return self._user
 
@@ -110,6 +113,7 @@ class EventStream:
 
 class MatrixRoom:
     """Represents matrix room."""
+    # todo
     pass
 
 
@@ -119,108 +123,27 @@ class MatrixUser:
     def __init__(self, mxid, api=None):
         self.mxid = mxid
         self.api = api
+        self.rooms = {}
 
     def register(self):
         """Registers self.mxid with homeserver."""
-        return self.api.register(utils.mxid2localpart(self.mxid))
+        # Shouldn't send user_id param with registration
+        self.api.identity = None
+        response = self.api.register(utils.mxid2localpart(self.mxid))
+        self.api.identity = self.mxid
+        return response
 
     def create_room(self, alias=None, is_public=False, invitees=()):
         """Calls /createRoom as self.mxid."""
-        return self.api.create_room(alias=alias, is_public=is_public,
-                                    invitees=invitees)
+        response = self.api.create_room(alias=alias, is_public=is_public,
+                                        invitees=invitees)
+        return self._mkroom(response["room_id"])
 
-    def join(self, room):
+    def join(self, room_str):
         """Joins room id or alias even if it must first be created."""
-        raise NotImplementedError("Bug Adam to get on this. He really shouldn't have released like this.")
+        response = self.api.join_room(room_str)
+        return self._mkroom(response["room_id"])
 
-    def send_location(self, *args, **kwargs):
-        """Sends m.location message event."""
-        return self.api.send_location(*args, **kwargs)
-
-    def send_message(self, *args, **kwargs):
-        """Sends m.room.message with default msgtype m.text."""
-        return self.api.send_message(*args, **kwargs)
-
-    def send_emote(self, *args, **kwargs):
-        """Sends m.room.message with msgtype m.emote."""
-        return self.api.send_emote(*args, **kwargs)
-
-    def send_notice(self, *args, **kwargs):
-        """Sends m.room.message with msgtype m.note."""
-        return self.api.send_notice(*args, **kwargs)
-
-    def set_room_name(self, *args, **kwargs):
-        """Sets room name.
-
-        Args:
-            room_id(str): The room ID
-            name(str): The new rom name
-            timestamp(int): Optional. Set origin_server_ts
-        """
-        return self.api.set_room_name(*args, **kwargs)
-
-    def set_room_topic(self, *args, **kwargs):
-        """Sets room topic.
-
-        Args:
-            room_id(str): The room ID
-            topic(str): The new room topic
-            timestamp(int): Optional. Set origin_server_ts (For application services only)
-        """
-        return self.api.set_room_topic(*args, **kwargs)
-
-    def leave_room(self, *args, **kwargs):
-        """Perform POST /rooms/$room_id/leave
-
-        Args:
-            room_id(str): The room ID
-        """
-        return self.api.leave_room(*args, **kwargs)
-
-    def invite_user(self, *args, **kwargs):
-        """Perform POST /rooms/$room_id/invite
-
-        Args:
-            room_id(str): The room ID
-            user_id(str): The user ID of the invitee
-        """
-        return self.api.invite_user(*args, **kwargs)
-
-    def kick_user(self, *args, **kwargs):
-        """Calls set_membership with membership="leave" for the user_id provided
-        """
-        return self.api.kick_user(*args, **kwargs)
-
-    def get_membership(self, room_id):
-        """Returns membership of user in room_id."""
-        return self.api.get_membership(self, room_id, self.mxid)
-
-    def set_membership(self, room_id, membership, **kwargs):
-        """Sets membership of self.mxid in room_id.
-
-        Args:
-            room_id(str): The room ID
-            membership(str): New membership value
-            reason(str): The reason
-            timestamp(int): Optional. Set origin_server_ts (For application services only)
-        """
-        return self.api.set_membership(room_id, self.mxid, membership, **kwargs)
-
-    def ban_user(self, *args, **kwargs):
-        """Perform POST /rooms/$room_id/ban
-
-        Args:
-            room_id(str): The room ID
-            user_id(str): The user ID of the banee(sic)
-            reason(str): The reason for this ban
-        """
-        return self.api.ban_user(*args, **kwargs)
-
-    def unban_user(self, *args, **kwargs):
-        """Perform POST /rooms/$room_id/unban
-
-        Args:
-            room_id(str): The room ID
-            user_id(str): The user ID of the banee(sic)
-        """
-        return self.api.unban_user(*args, **kwargs)
+    def _mkroom(self, room_id):
+        self.rooms[room_id] = MatrixRoom(room_id, self.api)
+        return self.rooms[room_id]
