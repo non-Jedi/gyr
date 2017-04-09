@@ -113,14 +113,28 @@ class EventStream:
 
 class MatrixRoom:
     """Represents matrix room."""
-    # todo
-    pass
+
+    def __init__(self, room_id, api):
+        """Instantiates MatrixRoom object.
+
+        Args:
+            room_id(str): Matrix room id (e.g. !1234567:example.com)
+            api(MatrixASHttpAPI): Api for calls to the server.
+        """
+        self.room_id = room_id
+        self.api = api
 
 
 class MatrixUser:
     """Represents matrix user account."""
 
-    def __init__(self, mxid, api=None):
+    def __init__(self, mxid, api):
+        """Instantiates MatrixUser object.
+
+        Args:
+            mxid(str): User id (e.g. @me:example.createRoom)
+            api(MatrixASHttpAPI): Api for calls to the server.
+        """
         self.mxid = mxid
         self.api = api
         self.rooms = {}
@@ -147,3 +161,23 @@ class MatrixUser:
     def _mkroom(self, room_id):
         self.rooms[room_id] = MatrixRoom(room_id, self.api)
         return self.rooms[room_id]
+
+    @property
+    def displayname(self):
+        """Queries the server to return current displayname."""
+        return self.api.get_display_name(self.mxid)
+
+    @displayname.setter
+    def displayname(self, new_displayname):
+        """PUTs new displayname to server."""
+        self.api.set_display_name(self.mxid, new_displayname)
+
+    @property
+    def avatar_url(self):
+        """Gets current avatar url from server."""
+        return self.api.get_avatar_url(self.mxid)
+
+    @avatar_url.setter
+    def avatar_url(self, new_url):
+        """PUTs new avatar url to server."""
+        self.api.set_avatar_url(self.mxid, new_url)
