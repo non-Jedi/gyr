@@ -124,11 +124,72 @@ class MatrixRoom:
         self.room_id = room_id
         self.api = api
 
+    def send_text(self, text):
+        raise NotImplementedError("Use MatrixRoom.api for now.")
+
+    def send_html(self, html, body=None):
+        raise NotImplementedError("Use MatrixRoom.api for now.")
+
+    def send_emote(self, text):
+        raise NotImplementedError("Use MatrixRoom.api for now.")
+
+    def send_notice(self, text):
+        self.api.send_notice(self.room_id, text)
+
+    def send_file(self, url, filename, **extra_information):
+        raise NotImplementedError("Use MatrixRoom.api for now.")
+
+    def send_location(self, body, geo_uri, thumbnail_url=None,
+                      thumbnail_info={}):
+        raise NotImplementedError("Use MatrixRoom.api for now.")
+
+    def invite(self, user_id):
+        raise NotImplementedError("Use MatrixRoom.api for now.")
+
+    def kick(self, user_id):
+        raise NotImplementedError("Use MatrixRoom.api for now.")
+
+    def ban(self, user_id):
+        raise NotImplementedError("Use MatrixRoom.api for now.")
+
+    def unban(self, user_id):
+        raise NotImplementedError("Use MatrixRoom.api for now.")
+
+    def leave(self, user_id):
+        raise NotImplementedError("Use MatrixRoom.api for now.")
+
+    @property
+    def name(self):
+        raise NotImplementedError("Use MatrixRoom.api for now.")
+
+    @name.setter
+    def name(self, new_name):
+        raise NotImplementedError("Use MatrixRoom.api for now.")
+
+    @property
+    def topic(self):
+        raise NotImplementedError("Use MatrixRoom.api for now.")
+
+    @topic.setter
+    def topic(self, new_topic):
+        raise NotImplementedError("Use MatrixRoom.api for now.")
+
+    @property
+    def aliases(self):
+        raise NotImplementedError("Use MatrixRoom.api for now.")
+
+    def add_alias(self, new_alias):
+        raise NotImplementedError("Use MatrixRoom.api for now.")
+
+    @property
+    def members(self):
+        raise NotImplementedError("Use MatrixRoom.api for now.")
+
 
 class MatrixUser:
     """Represents matrix user account."""
 
-    def __init__(self, mxid, api):
+    def __init__(self, mxid, api_factory):
         """Instantiates MatrixUser object.
 
         Args:
@@ -136,31 +197,29 @@ class MatrixUser:
             api(MatrixASHttpAPI): Api for calls to the server.
         """
         self.mxid = mxid
-        self.api = api
-        self.rooms = {}
+        self.user_api = api_factory(mxid)
+        self.api = api_factory()
+        self._rooms = {}
 
     def register(self):
         """Registers self.mxid with homeserver."""
         # Shouldn't send user_id param with registration
-        self.api.identity = None
-        response = self.api.register(utils.mxid2localpart(self.mxid))
-        self.api.identity = self.mxid
-        return response
+        return self.api.register(utils.mxid2localpart(self.mxid))
 
     def create_room(self, alias=None, is_public=False, invitees=()):
         """Calls /createRoom as self.mxid."""
-        response = self.api.create_room(alias=alias, is_public=is_public,
-                                        invitees=invitees)
+        response = self.user_api.create_room(alias=alias, is_public=is_public,
+                                             invitees=invitees)
         return self._mkroom(response["room_id"])
 
     def join(self, room_str):
         """Joins room id or alias even if it must first be created."""
-        response = self.api.join_room(room_str)
+        response = self.user_api.join_room(room_str)
         return self._mkroom(response["room_id"])
 
     def _mkroom(self, room_id):
-        self.rooms[room_id] = MatrixRoom(room_id, self.api)
-        return self.rooms[room_id]
+        self._rooms[room_id] = MatrixRoom(room_id, self.user_api)
+        return self._rooms[room_id]
 
     @property
     def displayname(self):
@@ -170,7 +229,7 @@ class MatrixUser:
     @displayname.setter
     def displayname(self, new_displayname):
         """PUTs new displayname to server."""
-        self.api.set_display_name(self.mxid, new_displayname)
+        self.user_api.set_display_name(self.mxid, new_displayname)
 
     @property
     def avatar_url(self):
@@ -180,4 +239,16 @@ class MatrixUser:
     @avatar_url.setter
     def avatar_url(self, new_url):
         """PUTs new avatar url to server."""
-        self.api.set_avatar_url(self.mxid, new_url)
+        self.user_api.set_avatar_url(self.mxid, new_url)
+
+    @property
+    def rooms(self):
+        """Refreshes room list if empty and returns it."""
+        if not self._rooms:
+            self.refresh_rooms()
+        return self._rooms
+
+    def refresh_rooms(self):
+        """Calls GET /joined_rooms to refresh rooms list."""
+        for room_id in self.user_api.get_joined_rooms()["joined_rooms"]:
+            self._room[room_id] = MatrixRoom(room_id, self.user_api)

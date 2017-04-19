@@ -40,7 +40,7 @@ class MatrixASHttpAPI(MatrixHttpApi):
         if self.identity:
             kwargs["query_params"]["user_id"] = self.identity
 
-        super(MatrixASHttpAPI, self)._send(*args, **kwargs)
+        return super(MatrixASHttpAPI, self)._send(*args, **kwargs)
 
     def register(self, username):
         """Performs /register with type: m.login.application_service
@@ -54,3 +54,7 @@ class MatrixASHttpAPI(MatrixHttpApi):
         }
         return self._send("POST", "/register", content,
                           api_path=MATRIX_V2_API_PATH)
+
+    def get_joined_rooms(self):
+        """Performs GET /joined_rooms."""
+        return self._send("GET", "/joined_rooms")

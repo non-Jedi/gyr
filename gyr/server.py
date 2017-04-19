@@ -22,7 +22,7 @@ from .api import MatrixASHttpAPI
 
 class Application(falcon.API):
 
-    def __init__(self, hs_address=None, hs_token=None, *args, **kwargs):
+    def __init__(self, hs_address, hs_token, *args, **kwargs):
         # This runs the __init__ method of falcon.API
         super().__init__(*args, **kwargs)
         self.hs_address = hs_address
