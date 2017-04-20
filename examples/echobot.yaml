@@ -1,0 +1,13 @@
+id: gyr_echobot
+url: http://localhost:8000
+as_token: foobar
+hs_token: foobar
+sender_localpart: "_echobot_service"
+namespaces:
+  users:
+    - exclusive: true
+      regex: "@_echobot_service.*"
+    - exclusive: true
+      regex: "@_example.*"
+  aliases: []
+  rooms: []
