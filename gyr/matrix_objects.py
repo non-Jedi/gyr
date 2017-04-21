@@ -125,65 +125,70 @@ class MatrixRoom:
         self.api = api
 
     def send_text(self, text):
-        raise NotImplementedError("Use MatrixRoom.api for now.")
+        self.api.send_message(self.room_id, text)
 
     def send_html(self, html, body=None):
         raise NotImplementedError("Use MatrixRoom.api for now.")
 
     def send_emote(self, text):
-        raise NotImplementedError("Use MatrixRoom.api for now.")
+        self.api.send_emote(self.room_id, text)
 
     def send_notice(self, text):
         self.api.send_notice(self.room_id, text)
 
-    def send_file(self, url, filename, **extra_information):
-        raise NotImplementedError("Use MatrixRoom.api for now.")
+    def send_file(self, url, file_object, **extra_information):
+        raise NotImplementedError("Methods need to be implemented in api.")
 
     def send_location(self, body, geo_uri, thumbnail_url=None,
                       thumbnail_info={}):
-        raise NotImplementedError("Use MatrixRoom.api for now.")
+        self.api.send_location(self.room_id, geo_uri, body)
 
     def invite(self, user_id):
-        raise NotImplementedError("Use MatrixRoom.api for now.")
+        self.api.invite_user(self.room_id, user_id)
 
-    def kick(self, user_id):
-        raise NotImplementedError("Use MatrixRoom.api for now.")
+    def kick(self, user_id, reason=""):
+        self.api.kick_user(self.room_id, user_id, reason=reason)
 
-    def ban(self, user_id):
-        raise NotImplementedError("Use MatrixRoom.api for now.")
+    def ban(self, user_id, reason=""):
+        self.api.ban_user(self.room_id, user_id, reason=reason)
 
     def unban(self, user_id):
-        raise NotImplementedError("Use MatrixRoom.api for now.")
+        self.api.unban_user(self.room_id, user_id)
 
-    def leave(self, user_id):
-        raise NotImplementedError("Use MatrixRoom.api for now.")
+    def leave(self):
+        self.api.leave_room(self.room_id)
 
     @property
     def name(self):
-        raise NotImplementedError("Use MatrixRoom.api for now.")
+        return self.api.get_room_name(self.room_id)["name"]
 
     @name.setter
     def name(self, new_name):
-        raise NotImplementedError("Use MatrixRoom.api for now.")
+        self.api.set_room_name(self.room_id, new_name)
 
     @property
     def topic(self):
-        raise NotImplementedError("Use MatrixRoom.api for now.")
+        return self.api.get_room_topic(self.room_id)["topic"]
 
     @topic.setter
     def topic(self, new_topic):
-        raise NotImplementedError("Use MatrixRoom.api for now.")
+        self.api.set_room_topic(self.room_id, new_topic)
 
     @property
     def aliases(self):
-        raise NotImplementedError("Use MatrixRoom.api for now.")
+        raise NotImplementedError(
+            "Getting state event m.room.aliases not yet implemented upstream"
+        )
 
     def add_alias(self, new_alias):
-        raise NotImplementedError("Use MatrixRoom.api for now.")
+        self.api.set_room_alias(self.room_id, new_alias)
+
+    def rm_alias(self, alias):
+        self.api.remove_room_alias(alias)
 
     @property
     def members(self):
-        raise NotImplementedError("Use MatrixRoom.api for now.")
+        return self.api.get_room_members(self.room_id)
 
 
 class MatrixUser:
