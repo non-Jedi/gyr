@@ -29,6 +29,14 @@ Gyr is designed to be a fairly thin layer of abstraction over application
 service api--just enough to make things easy without pushing you so far from the
 spec that you get confused.
 
+# Installation
+
+Please install gyr with pip (in a virtualenv if you prefer):
+
+```sh
+pip install gyr
+```
+
 # Usage
 
 I'll try to show a bunch of functionality here, but see examples directory for

@@ -24,9 +24,11 @@ with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='gyr',
+    author='Adam Beckmeyer',
+    author_email='adam_git@thebeckmeyers.xyz',
     description='A python framework for building matrix application services',
     long_description=long_description,
-    version='0.0.0dev',
+    version='0.1.0',
     url='https://github.com/non-Jedi/gyr',
     license='GPLv3',
     classifiers=[
@@ -40,6 +42,7 @@ setup(
     ],
     keywords='matrix chat falcon WSGI application-service',
     packages=find_packages(),
+    package_data={'': ['LICENSE', 'README.md']},
     install_requires=[
         'falcon',
         'requests',
