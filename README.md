@@ -19,17 +19,62 @@ Gyr. If not, see <http://www.gnu.org/licenses/>.
 
 # Gyr
 
-Gyr is a framework for developing [matrix](https://matrix.org) [application
-services](http://matrix.org/docs/spec/application_service/unstable.html). It
-provides a WSGI application and several other utilities for working with
-matrix. It's designed to be a fairly thin layer of abstraction over
-application service api.
+Gyr is a framework for quickly developing [matrix](https://matrix.org)
+[application
+services](http://matrix.org/docs/spec/application_service/unstable.html) in
+python3. It provides a WSGI application and several other utilities for working
+with matrix. 
+
+Gyr is designed to be a fairly thin layer of abstraction over application
+service api--just enough to make things easy without pushing you so far from the
+spec that you get confused.
+
+# Usage
+
+I'll try to show a bunch of functionality here, but see examples directory for
+further usage examples.
+
+```python
+from gyr import server, matrix_objects
+
+application = server.Application("http://localhost:8008", "foobar")
+
+as_user = matrix_objects.MatrixUser("@example_as:example.com",
+                                    application.create_api)
+room = as_user.create_room(alias="#foo:example.com", is_public=True)
+
+def rm_hndlr(room_id):
+    # Gyr will create a user for you if this returns true!
+    return False
+    
+def user_hndlr(user_id):
+    # Gyr will create the room for you if this returns true!
+    return False
+    
+def txn_hndlr(events):
+    for event in events:
+    	room.send_notice(
+	    "Received event type {} in room {} from user {}".format(event.type,
+	                                                            event.room,
+								    event.user)
+	)
+    return True
+	
+application.add_handlers(room_handler=rm_hndlr, transaction_handler=txn_hndlr,
+                         user_handler=user_hndlr)
+```
+
+Save as example.py. Then from the commandline:
+
+```sh
+gunicorn example:application
+```
 
 # Status
 
-Pre-alpha! Breaking changes happen on a weekly to daily basis, and the
-developer(s) mostly don't notice at all since this isn't being used for
-anything yet.
+Very alpha! Most of the main functionality I'd envisioned is present, however
+there's poor to non-existent documentation and no unit tests. Contributions are
+welcome.
 
 # Projects Using Gyr
 
