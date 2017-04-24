@@ -21,9 +21,9 @@ class GyrException(Exception):
     pass
 
 
-class HomeServerResponseError(GyrException):
-    pass
+class HttpRequestError(GyrException):
+    """Wraps exceptions raised when making http requests to matrix server."""
 
-
-class GyrNotImplemented(GyrException):
-    pass
+    def __init__(self, msg, original_exception):
+        super(HttpRequestError, self).__init__(msg + ": {}".format(original_exception))
+        self.original_exception = original_exception

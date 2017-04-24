@@ -16,6 +16,8 @@
 # along with Gyr.  If not, see
 # <http://www.gnu.org/licenses/>.
 from matrix_client.api import MatrixHttpApi, MATRIX_V2_API_PATH
+from . import exceptions
+from requests.exceptions import RequestException
 
 
 class MatrixASHttpAPI(MatrixHttpApi):
@@ -40,7 +42,12 @@ class MatrixASHttpAPI(MatrixHttpApi):
         if self.identity:
             kwargs["query_params"]["user_id"] = self.identity
 
-        return super(MatrixASHttpAPI, self)._send(*args, **kwargs)
+        try:
+            return super(MatrixASHttpAPI, self)._send(*args, **kwargs)
+        except RequestException as e:
+            raise exceptions.HttpRequestError(
+                "Something went wrong with the http request", e
+            )
 
     def register(self, username):
         """Performs /register with type: m.login.application_service
