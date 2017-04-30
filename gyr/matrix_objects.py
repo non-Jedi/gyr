@@ -36,6 +36,11 @@ class Event:
         self.json = json
         self.api_factory = api_factory
 
+        self.type = json["type"]
+        self.content = json["content"]
+        self.timestamp = json["origin_server_ts"]
+        self.id = json["room_id"]
+
     @property
     def user(self):
         """Creates a User object when requested."""
@@ -58,26 +63,6 @@ class Event:
             room_id = self.json["room_id"]
             self._room = MatrixRoom(room_id, self.api_factory())
             return self._room
-
-    @property
-    def type(self):
-        """Returns the type of event."""
-        return self.json["type"]
-
-    @property
-    def content(self):
-        """Returns content of event."""
-        return self.json["content"]
-
-    @property
-    def timestamp(self):
-        """Returns the timestamp in milliseconds."""
-        return self.json["origin_server_ts"]
-
-    @property
-    def id(self):
-        """Returns the event id."""
-        return self.json["room_id"]
 
 
 class EventStream:
