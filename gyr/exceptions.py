@@ -25,5 +25,16 @@ class HttpRequestError(GyrException):
     """Wraps exceptions raised when making http requests to matrix server."""
 
     def __init__(self, msg, original_exception):
-        super(HttpRequestError, self).__init__(msg + ": {}".format(original_exception))
+        super(HttpRequestError, self).__init__(
+            "{}: {}".format(msg, original_exception)
+        )
+        self.original_exception = original_exception
+
+
+class MatrixError(GyrException):
+
+    def __init__(self, msg, original_exception):
+        super(MatrixError, self).__init__(
+            "{}. {}".format(msg, original_exception)
+        )
         self.original_exception = original_exception

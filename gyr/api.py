@@ -17,7 +17,8 @@
 # <http://www.gnu.org/licenses/>.
 from matrix_client.api import MatrixHttpApi, MATRIX_V2_API_PATH
 from . import exceptions
-from requests.exceptions import RequestException
+import requests.exceptions
+import matrix_client.errors
 
 
 class MatrixASHttpAPI(MatrixHttpApi):
@@ -44,9 +45,13 @@ class MatrixASHttpAPI(MatrixHttpApi):
 
         try:
             return super(MatrixASHttpAPI, self)._send(*args, **kwargs)
-        except RequestException as e:
+        except requests.exceptions.RequestException as e:
             raise exceptions.HttpRequestError(
                 "Something went wrong with the http request", e
+            )
+        except matrix_client.errors.MatrixError as e:
+            raise exceptions.MatrixError(
+                "Something went wrong with the matrix request", e
             )
 
     def register(self, username):
