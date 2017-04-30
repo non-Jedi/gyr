@@ -19,6 +19,9 @@ Gyr. If not, see <http://www.gnu.org/licenses/>.
 
 # Gyr
 
+Come talk with us about Gyr on matrix at
+[#gyr:matrix.org](https://matrix.to/#/#gyr:matrix.org)!
+
 Gyr is a framework for quickly developing [matrix](https://matrix.org)
 [application
 services](http://matrix.org/docs/spec/application_service/unstable.html) in
