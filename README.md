@@ -122,9 +122,3 @@ need to do.
 
 Pull requests enriching the functionality of these classes are very
 welcome.
-
-# Gyr Internals
-
-Gyr builds on [falcon](https://falconframework.org) to create its WSGI
-application class. For sending http requests, Gyr uses
-[requests](https://python-requests.org).
