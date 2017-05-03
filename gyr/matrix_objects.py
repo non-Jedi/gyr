@@ -17,6 +17,8 @@
 # <http://www.gnu.org/licenses/>.
 
 from . import utils
+from . import exceptions
+import matrix_client.errors
 
 
 class Event:
@@ -96,7 +98,28 @@ class EventStream:
             return Event(self.json[self._index - 1], self.api_factory)
 
 
-class MatrixRoom:
+class MatrixObject:
+    """Class for room and user inheritance providing shared methods."""
+
+    def intent(self, func):
+        """Handles errors to try to accomplish intent."""
+        def wrapper(*args, **kwargs):
+            while True:
+                try:
+                    return func(*args, **kwargs)
+                except exceptions.MatrixError as e:
+                    if isinstance(e.original_exception,
+                                  matrix_client.errors.MatrixRequestError):
+                        self._handle_request_exception(e)
+                    else:
+                        raise e
+        return wrapper
+
+    def _handle_request_exception(self, exception):
+        raise exception
+
+
+class MatrixRoom(MatrixObject):
     """Represents matrix room."""
 
     def __init__(self, room_id, api):
@@ -176,7 +199,7 @@ class MatrixRoom:
         return self.api.get_room_members(self.room_id)
 
 
-class MatrixUser:
+class MatrixUser(MatrixObject):
     """Represents matrix user account."""
 
     def __init__(self, mxid, api_factory):
