@@ -50,8 +50,7 @@ from gyr import server, matrix_objects
 
 application = server.Application("http://localhost:8008", "foobar")
 
-as_user = matrix_objects.MatrixUser("@example_as:example.com",
-                                    application.create_api)
+as_user = matrix_objects.MatrixUser("@example_as:example.com", application.Api)
 room = as_user.create_room(alias="#foo:example.com", is_public=True)
 
 def rm_hndlr(room_id):
@@ -89,7 +88,7 @@ welcome.
 
 # Projects Using Gyr
 
-None for now! Check back later.
+* [matrix_relay](https://github.com/non-Jedi/matrix_relay)
 
 # Modules
 

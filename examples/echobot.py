@@ -22,7 +22,7 @@ from gyr.matrix_objects import MatrixUser
 application = Application("http://localhost:8008", "foobar")
 
 example_mxid = "@_example_user:local"
-example_user = MatrixUser(example_mxid, application.create_api)
+example_user = MatrixUser(example_mxid, application.Api)
 
 
 def room_handler(room_alias):

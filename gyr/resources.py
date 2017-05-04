@@ -24,11 +24,11 @@ from .matrix_objects import EventStream
 class Resource:
     """Master class for falcon http resources."""
 
-    def __init__(self, handler, api_factory):
+    def __init__(self, handler, Api):
         self.handler = handler
-        self.api_factory = api_factory
+        self.Api = Api
         # Api used directly by Room and User resources
-        self.api = api_factory()
+        self.api = Api()
         # Place to track occurences of e.g. a certain txn_id
         self.tracker = [None] * 20
 
@@ -75,7 +75,7 @@ class Transaction(Resource):
             response.body = "Malformed request body"
             return
 
-        if self.handler(EventStream(events, self.api_factory)):
+        if self.handler(EventStream(events, self.Api)):
             response.status = falcon.HTTP_200
         else:
             response.status = falcon.HTTP_400

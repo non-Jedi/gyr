@@ -25,18 +25,18 @@ class Event:
     """Represents a matrix event sent by the HS.
 
     Usage:
-        event = Event(json, api_factory)
+        event = Event(json, Api)
     """
 
-    def __init__(self, json, api_factory):
+    def __init__(self, json, Api):
         """Instantiates Event instance.
 
         Args:
             json(dict): Event json from homeserver.
-            api_factory(func): Creates api for calling homeserver.
+            Api(func): Creates api for calling homeserver.
         """
         self.json = json
-        self.api_factory = api_factory
+        self.Api = Api
 
         self.type = json["type"]
         self.content = json["content"]
@@ -53,7 +53,7 @@ class Event:
                 mxid = self.json["sender"]
             else:
                 mxid = self.json["user_id"]
-            self._user = MatrixUser(mxid, self.api_factory(mxid))
+            self._user = MatrixUser(mxid, self.Api(identity=mxid))
             return self._user
 
     @property
@@ -63,7 +63,7 @@ class Event:
             return self._room
         except AttributeError:
             room_id = self.json["room_id"]
-            self._room = MatrixRoom(room_id, self.api_factory())
+            self._room = MatrixRoom(room_id, self.Api)
             return self._room
 
 
@@ -75,16 +75,16 @@ class EventStream:
         [print(i.user) for i in events]
         """
 
-    def __init__(self, json, api_factory):
+    def __init__(self, json, Api):
         """Instantiates EventStream instance.
 
         Args:
             json(list): List from deserializing txn from homeserver.
-            api_factory(func): Generates http api when passed mxid.
+            Api(func): Generates http api when passed identity=mxid.
         """
         self.json = json
         self._index = 0
-        self.api_factory = api_factory
+        self.Api = Api
 
     def __iter__(self):
         return self
@@ -95,7 +95,7 @@ class EventStream:
             raise StopIteration
         else:
             self._index += 1
-            return Event(self.json[self._index - 1], self.api_factory)
+            return Event(self.json[self._index - 1], self.Api)
 
 
 class MatrixObject:
@@ -202,16 +202,16 @@ class MatrixRoom(MatrixObject):
 class MatrixUser(MatrixObject):
     """Represents matrix user account."""
 
-    def __init__(self, mxid, api_factory):
+    def __init__(self, mxid, Api):
         """Instantiates MatrixUser object.
 
         Args:
             mxid(str): User id (e.g. @me:example.createRoom)
-            api(MatrixASHttpAPI): Api for calls to the server.
+            Api(func): Generates api for calls to the server.
         """
         self.mxid = mxid
-        self.user_api = api_factory(mxid)
-        self.api = api_factory()
+        self.user_api = Api(identity=mxid)
+        self.api = Api()
         self._rooms = {}
 
     def register(self):
@@ -264,4 +264,4 @@ class MatrixUser(MatrixObject):
     def refresh_rooms(self):
         """Calls GET /joined_rooms to refresh rooms list."""
         for room_id in self.user_api.get_joined_rooms()["joined_rooms"]:
-            self._room[room_id] = MatrixRoom(room_id, self.user_api)
+            self._rooms[room_id] = MatrixRoom(room_id, self.user_api)
