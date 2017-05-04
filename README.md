@@ -89,6 +89,8 @@ welcome.
 # Projects Using Gyr
 
 * [matrix_relay](https://github.com/non-Jedi/matrix_relay)
+* Open a PR or [ping me on matrix](https://matrix.to/#/@abeckmeyer:matrix.org)
+	with your project. I'd love to hear about anyone building on gyr!
 
 # Modules
 
