@@ -17,6 +17,7 @@
 # <http://www.gnu.org/licenses/>.
 from matrix_client.api import MatrixHttpApi, MATRIX_V2_API_PATH
 from . import exceptions
+from . import utils
 import requests.exceptions
 import matrix_client.errors
 
@@ -33,7 +34,7 @@ class MatrixASHttpAPI(MatrixHttpApi):
                                        "Hello!")
     """
 
-    def __init__(self, *args, identity=None, **kwargs):
+    def __init__(self, *args, identity="", **kwargs):
         super(MatrixASHttpAPI, self).__init__(*args, **kwargs)
         self.identity = identity
 
@@ -54,12 +55,14 @@ class MatrixASHttpAPI(MatrixHttpApi):
                 "Something went wrong with the matrix request", e
             )
 
-    def register(self, username):
+    def register(self, username=""):
         """Performs /register with type: m.login.application_service
 
         Args:
             username(str): Username to register.
         """
+        if not username:
+            username = utils.mxid2localpart(self.identity)
         content = {
             "type": "m.login.application_service",
             "username": username,

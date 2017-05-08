@@ -16,6 +16,8 @@
 # along with Gyr.  If not, see
 # <http://www.gnu.org/licenses/>.
 
+from . import exceptions
+import matrix_client.errors
 from string import ascii_lowercase, digits
 import uuid
 
@@ -39,3 +41,28 @@ def is_full_mxid(user_string):
 def mxid2localpart(mxid):
     """Returns the localpart of a valid mxid."""
     return mxid.strip("@").split(":")[0]
+
+
+def intent(method):
+    """Helps object methods handle MatrixRequestError.
+
+    Args:
+        method(function): Object method to be wrapped
+
+    Method's object must have _handle_request_exception method that deals with
+    specific status codes and errcodes.
+    """
+
+    def wrapper(self, *args, **kwargs):
+        try:
+            return method(self, *args, **kwargs)
+        except exceptions.MatrixError as e:
+            if isinstance(e.original_exception,
+                          matrix_client.errors.MatrixRequestError):
+                self._handle_request_exception(e)
+                # May still throw exception for other reasons; not handled
+                return method(self, *args, **kwargs)
+            else:
+                raise e
+
+    return wrapper

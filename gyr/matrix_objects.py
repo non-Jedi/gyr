@@ -17,8 +17,6 @@
 # <http://www.gnu.org/licenses/>.
 
 from . import utils
-from . import exceptions
-import matrix_client.errors
 
 
 class Event:
@@ -98,28 +96,7 @@ class EventStream:
             return Event(self.json[self._index - 1], self.Api)
 
 
-class MatrixObject:
-    """Class for room and user inheritance providing shared methods."""
-
-    def intent(self, func):
-        """Handles errors to try to accomplish intent."""
-        def wrapper(*args, **kwargs):
-            while True:
-                try:
-                    return func(*args, **kwargs)
-                except exceptions.MatrixError as e:
-                    if isinstance(e.original_exception,
-                                  matrix_client.errors.MatrixRequestError):
-                        self._handle_request_exception(e)
-                    else:
-                        raise e
-        return wrapper
-
-    def _handle_request_exception(self, exception):
-        raise exception
-
-
-class MatrixRoom(MatrixObject):
+class MatrixRoom:
     """Represents matrix room."""
 
     def __init__(self, room_id, api):
@@ -132,37 +109,56 @@ class MatrixRoom(MatrixObject):
         self.room_id = room_id
         self.api = api
 
+    def _handle_request_exception(self, e):
+        if e.original_exception.code == 403:
+            # This sequence seeks to establish all necessary permissions
+            self.api.register()
+            self.api.join_room(self.room_id)
+        else:
+            raise e
+
+    @utils.intent
     def send_text(self, text):
         self.api.send_message(self.room_id, text)
 
+    @utils.intent
     def send_html(self, html, body=None):
         raise NotImplementedError("Use MatrixRoom.api for now.")
 
+    @utils.intent
     def send_emote(self, text):
         self.api.send_emote(self.room_id, text)
 
+    @utils.intent
     def send_notice(self, text):
         self.api.send_notice(self.room_id, text)
 
+    @utils.intent
     def send_file(self, url, file_object, **extra_information):
         raise NotImplementedError("Methods need to be implemented in api.")
 
+    @utils.intent
     def send_location(self, body, geo_uri, thumbnail_url=None,
                       thumbnail_info={}):
         self.api.send_location(self.room_id, geo_uri, body)
 
+    @utils.intent
     def invite(self, user_id):
         self.api.invite_user(self.room_id, user_id)
 
+    @utils.intent
     def kick(self, user_id, reason=""):
         self.api.kick_user(self.room_id, user_id, reason=reason)
 
+    @utils.intent
     def ban(self, user_id, reason=""):
         self.api.ban_user(self.room_id, user_id, reason=reason)
 
+    @utils.intent
     def unban(self, user_id):
         self.api.unban_user(self.room_id, user_id)
 
+    @utils.intent  # Seems silly to make sure room joined just to leave...
     def leave(self):
         self.api.leave_room(self.room_id)
 
@@ -188,6 +184,7 @@ class MatrixRoom(MatrixObject):
             "Getting state event m.room.aliases not yet implemented upstream"
         )
 
+    @utils.intent
     def add_alias(self, new_alias):
         self.api.set_room_alias(self.room_id, new_alias)
 
@@ -199,7 +196,7 @@ class MatrixRoom(MatrixObject):
         return self.api.get_room_members(self.room_id)
 
 
-class MatrixUser(MatrixObject):
+class MatrixUser:
     """Represents matrix user account."""
 
     def __init__(self, mxid, Api):
@@ -214,17 +211,26 @@ class MatrixUser(MatrixObject):
         self.api = Api()
         self._rooms = {}
 
+    def _handle_request_exception(self, e):
+        # Basically just make sure that the ghost user has been registered
+        if e.original_exception.code == 403:
+            self.register()
+        else:
+            raise e
+
     def register(self):
         """Registers self.mxid with homeserver."""
         # Shouldn't send user_id param with registration
         return self.api.register(utils.mxid2localpart(self.mxid))
 
+    @utils.intent
     def create_room(self, alias=None, is_public=False, invitees=()):
         """Calls /createRoom as self.mxid."""
         response = self.user_api.create_room(alias=alias, is_public=is_public,
                                              invitees=invitees)
         return self._mkroom(response["room_id"])
 
+    @utils.intent
     def join(self, room_str):
         """Joins room id or alias even if it must first be created."""
         response = self.user_api.join_room(room_str)
@@ -240,16 +246,19 @@ class MatrixUser(MatrixObject):
         return self.api.get_display_name(self.mxid)
 
     @displayname.setter
+    @utils.intent
     def displayname(self, new_displayname):
         """PUTs new displayname to server."""
         self.user_api.set_display_name(self.mxid, new_displayname)
 
     @property
+    @utils.intent
     def avatar_url(self):
         """Gets current avatar url from server."""
         return self.api.get_avatar_url(self.mxid)
 
     @avatar_url.setter
+    @utils.intent
     def avatar_url(self, new_url):
         """PUTs new avatar url to server."""
         self.user_api.set_avatar_url(self.mxid, new_url)
@@ -261,6 +270,7 @@ class MatrixUser(MatrixObject):
             self.refresh_rooms()
         return self._rooms
 
+    @utils.intent
     def refresh_rooms(self):
         """Calls GET /joined_rooms to refresh rooms list."""
         for room_id in self.user_api.get_joined_rooms()["joined_rooms"]:
