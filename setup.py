@@ -28,7 +28,7 @@ setup(
     author_email='adam_git@thebeckmeyers.xyz',
     description='A python framework for building matrix application services',
     long_description=long_description,
-    version='0.2.0',
+    version='0.3.0rc1',
     url='https://github.com/non-Jedi/gyr',
     license='GPLv3',
     classifiers=[

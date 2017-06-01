@@ -40,6 +40,10 @@ class Event:
         self.content = json["content"]
         self.timestamp = json["origin_server_ts"]
         self.id = json["room_id"]
+        if "sender" in json:
+            self.mxid = json["sender"]
+        else:
+            self.mxid = json["user_id"]
 
     @property
     def user(self):
@@ -47,11 +51,7 @@ class Event:
         try:
             return self._user
         except AttributeError:
-            if "sender" in self.json:
-                mxid = self.json["sender"]
-            else:
-                mxid = self.json["user_id"]
-            self._user = MatrixUser(mxid, self.Api(identity=mxid))
+            self._user = MatrixUser(self.mxid, self.Api(identity=self.mxid))
             return self._user
 
     @property
