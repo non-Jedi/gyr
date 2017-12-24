@@ -32,7 +32,22 @@ Gyr is designed to be a fairly thin layer of abstraction over application
 service api--just enough to make things easy without pushing you so far from the
 spec that you get confused.
 
-# Installation
+## Status
+
+Gyr hasn't been worked on in months. For a python application-service framework
+under more active development I recommend checking out Cadair's
+[python-appservice-framework](https://github.com/Cadair/python-appservice-framework).
+Use at your own risk currently, and be especially aware of [bugs like this one
+caused by Gyr's lack of
+asynchronicity](https://github.com/non-Jedi/gyr/issues/6). I hope to return to
+this framework once I [land async in
+matrix-python-sdk](https://github.com/matrix-org/matrix-python-sdk/pull/145).
+
+Very alpha! Most of the main functionality I'd envisioned is present, however
+there's poor to non-existent documentation and no unit tests. Contributions are
+welcome.
+
+## Installation
 
 Please install gyr with pip (in a virtualenv if you prefer):
 
@@ -40,7 +55,7 @@ Please install gyr with pip (in a virtualenv if you prefer):
 pip install gyr
 ```
 
-# Usage
+## Usage
 
 I'll try to show a bunch of functionality here, but see examples directory for
 further usage examples.
@@ -80,28 +95,22 @@ Save as example.py. Then from the commandline:
 gunicorn example:application
 ```
 
-# Status
-
-Very alpha! Most of the main functionality I'd envisioned is present, however
-there's poor to non-existent documentation and no unit tests. Contributions are
-welcome.
-
-# Projects Using Gyr
+## Projects Using Gyr
 
 * [matrix_relay](https://github.com/non-Jedi/matrix_relay)
 * Open a PR or [ping me on matrix](https://matrix.to/#/@abeckmeyer:matrix.org)
 	with your project. I'd love to hear about anyone building on gyr!
 
-# Modules
+## Modules
 
-## gyr.server
+### gyr.server
 
 `server` provides the WSGI application class. An instance of
 gyr.server.Application functions as the WSGI app and will automatically
 parse the request and call any handlers provided to the Application
 instance.
 
-## gyr.api
+### gyr.api
 
 `api` provides a helpful wrapper for
 [matrix-python-sdk](https://github.com/matrix-org/matrix-python-sdk)'s
@@ -113,7 +122,7 @@ merged into master.
 For working with the api, I recommend using the wrappers built around
 specific objects which are available in gyr.matrix_objects.
 
-## gyr.matrix_objects
+### gyr.matrix_objects
 
 `matrix_objects` provides helpful wrapper classes around matrix users,
 events and rooms. It is not designed to be easily used for the normal
